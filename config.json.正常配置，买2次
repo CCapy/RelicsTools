@@ -1,0 +1,249 @@
+{
+    "item": {
+        "color": [],
+        "size": [],
+        "bd": [
+            {
+                "key1": [],
+                "key2": [],
+                "key3": []
+            },
+            {
+                "key1": [],
+                "key2": [],
+                "key3": []
+            },
+            {
+                "key1": [],
+                "key2": [],
+                "key3": []
+            }
+        ],
+        "blacklist": [
+            "持续减少血量",
+            "降低攻击力"
+        ]
+    },
+    "lock": true,
+    "type": "all",
+    "regions": {
+        "name": [
+            891.0,
+            813.0,
+            1898.0,
+            1104.0
+        ],
+        "coords": [
+            890.0,
+            813.0,
+            1897.0,
+            1083.0
+        ]
+    },
+    "id": "",
+    "path": "",
+    "times": 1,
+    "save": false,
+    "load": true,
+    "actions": [
+        {
+            "type": "load"
+        },
+        {
+            "type": "enter",
+            "key": "f",
+            "tips": "进入游戏",
+            "delay": 0.5,
+            "image": "/images/anhen.png",
+            "coords": [
+                2228.0,
+                1326.0,
+                2284.0,
+                1376.0
+            ],
+            "wait": 0.5,
+            "times": 1
+        },
+        {
+            "key": "m",
+            "delay": 0.1,
+            "type": "action",
+            "tips": "打开地图",
+            "times": 1
+        },
+        {
+            "key": "down",
+            "delay": 0.1,
+            "type": "action",
+            "tips": "进入小壶商人",
+            "times": 6
+        },
+        {
+            "key": "f",
+            "delay": 0.5,
+            "type": "action",
+            "tips": "打开商店",
+            "times": 1
+        },
+        {
+            "key": "up",
+            "delay": 2,
+            "type": "action",
+            "tips": "找到遗物1",
+            "times": 1
+        },
+        {
+            "key": "right",
+            "delay": 0.1,
+            "type": "action",
+            "tips": "购买遗物3",
+            "times": 3
+        },
+        {
+            "key": "f",
+            "delay": 0.1,
+            "type": "action",
+            "tips": "购买物品",
+            "times": 1
+        },
+        {
+            "key": "down",
+            "delay": 0.1,
+            "type": "action",
+            "tips": "调整数量",
+            "times": 1
+        },
+        {
+            "key": "f",
+            "delay": 0.1,
+            "type": "action",
+            "tips": "购买",
+            "times": 1
+        },
+        {
+            "key": "f",
+            "delay": 0.1,
+            "type": "action",
+            "tips": "跳过加载",
+            "times": 1
+        },
+        {
+            "type": "roll",
+            "tips": "刷遗物启动",
+            "delay": 0.1,
+            "times": 10,
+            "success": {
+                "delay": 0.1,
+                "key": [
+                    "2",
+                    "right"
+                ]
+            },
+            "failure": {
+                "delay": 0.1,
+                "key": [
+                    "3"
+                ]
+            }
+        },
+        {
+            "key": "f",
+            "delay": 0.1,
+            "type": "action",
+            "tips": "购买物品",
+            "times": 1
+        },
+        {
+            "key": "down",
+            "delay": 0.1,
+            "type": "action",
+            "tips": "调整数量",
+            "times": 1
+        },
+        {
+            "key": "f",
+            "delay": 0.1,
+            "type": "action",
+            "tips": "购买",
+            "times": 1
+        },
+        {
+            "key": "f",
+            "delay": 0.1,
+            "type": "action",
+            "tips": "跳过加载",
+            "times": 1
+        },
+        {
+            "type": "roll",
+            "tips": "刷遗物启动",
+            "delay": 0.1,
+            "times": 10,
+            "success": {
+                "delay": 0.1,
+                "key": [
+                    "2",
+                    "right"
+                ]
+            },
+            "failure": {
+                "delay": 0.1,
+                "key": [
+                    "3"
+                ]
+            }
+        },
+        {
+            "key": "esc",
+            "delay": 0.1,
+            "type": "action",
+            "tips": "退出商店",
+            "times": 1
+        },
+        {
+            "key": "esc",
+            "delay": 0.1,
+            "type": "action",
+            "tips": "打开菜单",
+            "times": 1
+        },
+        {
+            "key": "f1",
+            "delay": 0.1,
+            "type": "action",
+            "tips": "找到系统菜单",
+            "times": 1
+        },
+        {
+            "key": "up",
+            "delay": 0.1,
+            "type": "action",
+            "tips": "找到结束游戏",
+            "times": 1
+        },
+        {
+            "key": "f",
+            "delay": 0.1,
+            "type": "action",
+            "tips": "退出到主菜单",
+            "times": 2
+        },
+        {
+            "key": "left",
+            "delay": 0.1,
+            "type": "action",
+            "tips": "选择确定按钮",
+            "times": 1
+        },
+        {
+            "key": "f",
+            "delay": 0.1,
+            "type": "action",
+            "tips": "确认退出",
+            "times": 1
+        },
+        {
+            "type": "save"
+        }
+    ]
+}

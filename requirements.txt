@@ -1,0 +1,9 @@
+# 项目依赖包
+pymem
+keyboard
+pydirectinput
+opencv-python
+numpy
+Pillow
+paddlepaddle
+paddleocr
