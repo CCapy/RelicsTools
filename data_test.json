@@ -1,0 +1,37 @@
+{
+    "6610400": {
+        "name": "提升血量上限",
+        "type": "能力",
+        "explanation": "生命值上限+10%",
+        "note": "",
+        "superposability": "可叠加"
+    },
+    "6610500": {
+        "name": "提升专注值上限",
+        "type": "能力",
+        "explanation": "专注值上限+15%",
+        "note": "",
+        "superposability": "可叠加"
+    },
+    "6610600": {
+        "name": "提升精力上限",
+        "type": "能力",
+        "explanation": "精力值上限+12%",
+        "note": "",
+        "superposability": "可叠加"
+    },
+    "6610700": {
+        "name": "减少专注值消耗",
+        "type": "能力",
+        "explanation": "专注值消耗-8%",
+        "note": "",
+        "superposability": "可叠加"
+    },
+    "6610701": {
+        "name": "减少专注值消耗＋１",
+        "type": "能力",
+        "explanation": "专注值消耗-13%",
+        "note": "似乎暂未加入抽取池？",
+        "superposability": ""
+    }
+}
