@@ -1,0 +1,119 @@
+{
+  "id": "76561198254701290",
+  "path": "C:\\Users\\Administrator\\AppData\\Roaming\\Nightreign\\123456",
+  "regions": [
+    2231,
+    1330,
+    2280,
+    1376
+  ],
+  "save": true,
+  "load": true,
+  "tasks": [
+    {
+      "type": "key",
+      "key": "f",
+      "tips": "购买石头",
+      "times": 1,
+      "delay": 0
+    },
+    {
+      "type": "key",
+      "key": "down",
+      "tips": "修改购买数量",
+      "times": 1,
+      "delay": 0
+    },
+    {
+      "type": "key",
+      "key": "f",
+      "tips": "确认购买",
+      "times": 1,
+      "delay": 0.1
+    },
+    {
+      "type": "key",
+      "key": "f",
+      "tips": "跳过动画",
+      "times": 1,
+      "delay": 0.5
+    },
+    {
+      "type": "roll",
+      "tips": "开始筛选石头",
+      "times": 10,
+      "delay": 0,
+      "success": {
+        "tips": "找到匹配的石头",
+        "interval": 0.1,
+        "key": [
+          "2",
+          "right"
+        ]
+      },
+      "failure": {
+        "tips": "没有找到匹配的石头",
+        "interval": 0.1,
+        "key": [
+          "3"
+        ]
+      }
+    },
+    {
+      "type": "key",
+      "key": "f",
+      "tips": "退出界面",
+      "times": 1,
+      "delay": 0.1
+    },
+    {
+      "type": "key",
+      "key": "f",
+      "tips": "购买石头",
+      "times": 1,
+      "delay": 0
+    },
+    {
+      "type": "key",
+      "key": "down",
+      "tips": "修改购买数量",
+      "times": 1,
+      "delay": 0
+    },
+    {
+      "type": "key",
+      "key": "f",
+      "tips": "确认购买",
+      "times": 1,
+      "delay": 0.1
+    },
+    {
+      "type": "key",
+      "key": "f",
+      "tips": "跳过动画",
+      "times": 1,
+      "delay": 0.5
+    },
+    {
+      "type": "roll",
+      "tips": "开始筛选石头",
+      "times": 10,
+      "delay": 0,
+      "success": {
+        "tips": "找到匹配的石头",
+        "interval": 0.1,
+        "key": [
+          "2",
+          "right"
+        ]
+      },
+      "failure": {
+        "tips": "没有找到匹配的石头",
+        "interval": 0.1,
+        "key": [
+          "3"
+        ]
+      }
+    }
+  ]
+}

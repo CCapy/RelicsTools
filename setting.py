@@ -151,7 +151,7 @@ class SettingWindow:
     
     def load_id(self):
         """加载当前ID从config.json"""
-        config_path = os.path.join(os.path.dirname(__file__), "config.json")
+        config_path = os.path.join(os.path.dirname(__file__), "config", "task.json")
         if os.path.exists(config_path):
             try:
                 with open(config_path, 'r', encoding='utf-8') as f:
@@ -163,18 +163,18 @@ class SettingWindow:
     
     def load_bd_data(self):
         """加载bd数组数据到Treeview"""
-        config_path = os.path.join(os.path.dirname(__file__), "config.json")
+        config_path = os.path.join(os.path.dirname(__file__), "config", "filters.json")
         if os.path.exists(config_path):
             try:
                 with open(config_path, 'r', encoding='utf-8') as f:
-                    config = json.load(f)
-                    if "bd" in config and isinstance(config["bd"], list):
+                    bd_list = json.load(f)
+                    if isinstance(bd_list, list):
                         # 清空现有数据
                         for item in self.tree.get_children():
                             self.tree.delete(item)
                         
                         # 添加新数据
-                        for i, item in enumerate(config["bd"]):
+                        for i, item in enumerate(bd_list):
                             index = i + 1
                             name = item.get("name", "")
                             key1_len = len(item.get("key1", []))
@@ -203,15 +203,15 @@ class SettingWindow:
         # 转换为数组索引（从0开始）
         bd_index = index - 1
         
-        # 读取config.json中的bd数据
-        config_path = os.path.join(os.path.dirname(__file__), "config.json")
+        # 读取config/filters.json中的bd数据
+        config_path = os.path.join(os.path.dirname(__file__), "config", "filters.json")
         if os.path.exists(config_path):
             try:
                 with open(config_path, 'r', encoding='utf-8') as f:
-                    config = json.load(f)
-                    if "bd" in config and isinstance(config["bd"], list):
-                        if 0 <= bd_index < len(config["bd"]):
-                            bd_item = config["bd"][bd_index]
+                    bd_list = json.load(f)
+                    if isinstance(bd_list, list):
+                        if 0 <= bd_index < len(bd_list):
+                            bd_item = bd_list[bd_index]
                             
                             # 弹出词条设置窗口（模态）
                             self.open_term_setting_window(bd_item, bd_index)
@@ -231,21 +231,21 @@ class SettingWindow:
     
     def delete_bd_item(self, bd_index):
         """从bd中删除指定索引的元素"""
-        config_path = os.path.join(os.path.dirname(__file__), "config.json")
+        config_path = os.path.join(os.path.dirname(__file__), "config", "filters.json")
         if os.path.exists(config_path):
             try:
                 # 读取配置
                 with open(config_path, 'r', encoding='utf-8') as f:
-                    config = json.load(f)
+                    bd_list = json.load(f)
                 
                 # 删除元素
-                if "bd" in config and isinstance(config["bd"], list):
-                    if 0 <= bd_index < len(config["bd"]):
-                        del config["bd"][bd_index]
+                if isinstance(bd_list, list):
+                    if 0 <= bd_index < len(bd_list):
+                        del bd_list[bd_index]
                         
                         # 保存配置
                         with open(config_path, 'w', encoding='utf-8') as f:
-                            json.dump(config, f, indent=2, ensure_ascii=False)
+                            json.dump(bd_list, f, indent=2, ensure_ascii=False)
                         
                         print(f"成功删除索引 {bd_index + 1} 的条目")
                         
@@ -264,21 +264,21 @@ class SettingWindow:
     
     def save_bd_name(self, bd_index, name_value):
         """保存bd条目的名字"""
-        config_path = os.path.join(os.path.dirname(__file__), "config.json")
+        config_path = os.path.join(os.path.dirname(__file__), "config", "filters.json")
         if os.path.exists(config_path):
             try:
                 # 读取配置
                 with open(config_path, 'r', encoding='utf-8') as f:
-                    config = json.load(f)
+                    bd_list = json.load(f)
                 
                 # 更新名字
-                if "bd" in config and isinstance(config["bd"], list):
-                    if 0 <= bd_index < len(config["bd"]):
-                        config["bd"][bd_index]["name"] = name_value
+                if isinstance(bd_list, list):
+                    if 0 <= bd_index < len(bd_list):
+                        bd_list[bd_index]["name"] = name_value
                         
                         # 保存配置
                         with open(config_path, 'w', encoding='utf-8') as f:
-                            json.dump(config, f, indent=2, ensure_ascii=False)
+                            json.dump(bd_list, f, indent=2, ensure_ascii=False)
                         
                         # 刷新Treeview
                         self.load_bd_data()
@@ -288,16 +288,16 @@ class SettingWindow:
     
     def add_bd_item(self):
         """在bd数组中添加空元素"""
-        config_path = os.path.join(os.path.dirname(__file__), "config.json")
+        config_path = os.path.join(os.path.dirname(__file__), "config", "filters.json")
         if os.path.exists(config_path):
             try:
                 # 读取配置
                 with open(config_path, 'r', encoding='utf-8') as f:
-                    config = json.load(f)
+                    bd_list = json.load(f)
                 
-                # 确保bd是数组
-                if "bd" not in config or not isinstance(config["bd"], list):
-                    config["bd"] = []
+                # 确保bd_list是数组
+                if not isinstance(bd_list, list):
+                    bd_list = []
                 
                 # 创建空元素
                 empty_item = {
@@ -309,13 +309,13 @@ class SettingWindow:
                 }
                 
                 # 添加到数组
-                config["bd"].append(empty_item)
+                bd_list.append(empty_item)
                 
                 # 保存配置
                 with open(config_path, 'w', encoding='utf-8') as f:
-                    json.dump(config, f, indent=2, ensure_ascii=False)
+                    json.dump(bd_list, f, indent=2, ensure_ascii=False)
                 
-                print(f"成功添加新的空条目，当前总数: {len(config['bd'])}")
+                print(f"成功添加新的空条目，当前总数: {len(bd_list)}")
                 
                 # 刷新Treeview
                 self.load_bd_data()
@@ -731,25 +731,24 @@ class SettingWindow:
             term_field = term_field_map.get(term_var.get(), "key1")
             # 更新bd_item
             bd_item[term_field] = current_terms
-            # 保存构筑名字
-            self.save_bd_name(bd_index, name_value)
+            # 更新构筑名字
+            bd_item["name"] = name_value
             # 保存整个bd条目
-            config_path = os.path.join(os.path.dirname(__file__), "config.json")
+            config_path = os.path.join(os.path.dirname(__file__), "config", "filters.json")
             if os.path.exists(config_path):
                 try:
                     # 读取配置
                     with open(config_path, 'r', encoding='utf-8') as f:
-                        config = json.load(f)
+                        bd_list = json.load(f)
                     
                     # 更新bd条目
-                    if "bd" in config and isinstance(config["bd"], list):
-                        if 0 <= bd_index < len(config["bd"]):
-                            config["bd"][bd_index] = bd_item
+                    if isinstance(bd_list, list):
+                        if 0 <= bd_index < len(bd_list):
+                            bd_list[bd_index] = bd_item
                             
                             # 保存配置
                             with open(config_path, 'w', encoding='utf-8') as f:
-                                json.dump(config, f, indent=2, ensure_ascii=False)
-                            
+                                json.dump(bd_list, f, indent=2, ensure_ascii=False)
                             
                             # 刷新主界面的Treeview组件
                             self.load_bd_data()
@@ -766,15 +765,15 @@ class SettingWindow:
         button_frame = tk.Frame(main_frame)
         button_frame.pack(side=tk.BOTTOM, pady=10)
         
+        # 保存按钮（绿色）
+        save_button = tk.Button(button_frame, text="保存", command=lambda: self.save_and_close(term_window, bd_index, name_var.get()), 
+                               width=10, height=1, padx=5, pady=5, fg="white", bg="green")
+        save_button.pack(side=tk.LEFT, padx=5)
+        
         # 删除按钮（红色）
         delete_button = tk.Button(button_frame, text="删除", command=lambda: self.confirm_delete(term_window, bd_index), 
                                 width=10, height=1, padx=5, pady=5, fg="white", bg="red")
-        delete_button.pack(side=tk.LEFT, padx=5)
-        
-        # 退出按钮
-        exit_button = tk.Button(button_frame, text="退出", command=lambda: self.save_and_close(term_window, bd_index, name_var.get()), 
-                               width=10, height=1, padx=5, pady=5)
-        exit_button.pack(side=tk.RIGHT, padx=5)
+        delete_button.pack(side=tk.RIGHT, padx=5)
         
         # 绑定窗口关闭事件
         term_window.protocol("WM_DELETE_WINDOW", lambda: self.save_and_close(term_window, bd_index, name_var.get()))
@@ -798,7 +797,7 @@ class SettingWindow:
     
     def save_id(self):
         """保存ID到config.json"""
-        config_path = os.path.join(os.path.dirname(__file__), "config.json")
+        config_path = os.path.join(os.path.dirname(__file__), "config", "task.json")
         id_value = self.id_entry.get()
         
         try:
