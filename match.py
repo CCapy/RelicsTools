@@ -11,6 +11,8 @@ class MatchEngine:
         self.bd_list = []
         self.blacklist_keys = set()
         self.roll_task = None
+        self.blacklist_data = {}
+        self.data_map = {}
         # 一次性加载所有需要的数据
         self._load_all_data()
 
@@ -29,6 +31,9 @@ class MatchEngine:
         # 加载黑名单
         self._load_blacklist()
         
+        # 加载data.json
+        self._load_data_map()
+        
         # 查找roll任务配置
         self._find_roll_task()
     
@@ -38,21 +43,38 @@ class MatchEngine:
         if os.path.exists(blacklist_path):
             try:
                 with open(blacklist_path, 'r', encoding='utf-8') as f:
-                    blacklist_data = json.load(f)
-                    self.blacklist_keys = set(blacklist_data.keys())
+                    self.blacklist_data = json.load(f)
+                    self.blacklist_keys = set(self.blacklist_data.keys())
             except Exception as e:
                 self.log(f"加载blacklist.json失败: {e}")
     
+    def _load_data_map(self):
+        """加载data.json"""
+        data_path = os.path.join(os.path.dirname(__file__), "data.json")
+        if os.path.exists(data_path):
+            try:
+                with open(data_path, 'r', encoding='utf-8') as f:
+                    self.data_map = json.load(f)
+            except Exception as e:
+                self.log(f"加载data.json失败: {e}")
+    
     def _find_roll_task(self):
         """查找roll任务配置"""
+        def search_roll_task(tasks):
+            for task in tasks:
+                if task.get('type') == 'roll':
+                    return task
+                elif task.get('type') == 'group':
+                    group_tasks = task.get('task', [])
+                    result = search_roll_task(group_tasks)
+                    if result:
+                        return result
+            return None
+        
         try:
-            with open('config/task.json', 'r', encoding='utf-8') as f:
-                config = json.load(f)
-                tasks = config.get('tasks', [])
-                for task in tasks:
-                    if task.get('type') == 'roll':
-                        self.roll_task = task
-                        break
+            # 使用已加载的 config，不再重复读取文件
+            tasks = self.config.get('tasks', [])
+            self.roll_task = search_roll_task(tasks)
         except Exception as e:
             self.log(f"加载任务配置失败: {e}")
     
@@ -88,17 +110,8 @@ class MatchEngine:
                     blacklist_term = term
                     break
             if blacklist_term:
-                # 获取负面词条名称
-                blacklist_name = ""
-                blacklist_path = os.path.join(os.path.dirname(__file__), "blacklist.json")
-                if os.path.exists(blacklist_path):
-                    try:
-                        with open(blacklist_path, 'r', encoding='utf-8') as f:
-                            blacklist_data = json.load(f)
-                            if blacklist_term in blacklist_data:
-                                blacklist_name = blacklist_data[blacklist_term].get('name', blacklist_term)
-                    except:
-                        pass
+                # 使用预加载的黑名单数据
+                blacklist_name = self.blacklist_data.get(blacklist_term, {}).get('name', blacklist_term)
                 return False, None, f"存在负面词条:({blacklist_term}) {blacklist_name}"
             else:
                 return False, None, "存在负面词条"
@@ -130,18 +143,9 @@ class MatchEngine:
                         if term in key3:
                             matched_term = term
                             break
-                # 获取匹配词条的名称
+                # 使用预加载的数据获取名称
                 if matched_term:
-                    # 从data.json获取名称
-                    data_path = os.path.join(os.path.dirname(__file__), "data.json")
-                    if os.path.exists(data_path):
-                        try:
-                            with open(data_path, 'r', encoding='utf-8') as f:
-                                data = json.load(f)
-                                if str(matched_term) in data:
-                                    matched_name = data[str(matched_term)].get('name', matched_term)
-                        except:
-                            pass
+                    matched_name = self.data_map.get(str(matched_term), {}).get('name', matched_term)
                     return True, bd_item, f"存在({matched_term}) {matched_name}"
                 else:
                     return True, bd_item, "匹配成功"
@@ -168,23 +172,33 @@ class MatchEngine:
             # 没有配置key，默认匹配
             return True
         
-        # 检查是否满足所有key的要求
-        remaining_terms = set(positive_terms)
+        # 优化：创建快速查找集合
+        term_set = set()
+        for term in positive_terms:
+            term_set.add(term)
+            term_set.add(str(term))
+        
+        matched_keys = 0
+        used_terms = set()
         
         for key in required_keys:
-            # 检查是否有一个词条在key中
-            matched = False
-            for term in list(remaining_terms):
-                # 检查整数形式和字符串形式是否在key中
-                if term in key or str(term) in key:
-                    matched = True
-                    remaining_terms.remove(term)
-                    break
+            # 快速检查是否有匹配项
+            key_set = set(key)
+            intersection = term_set & key_set
+            if not intersection:
+                return False
             
-            if not matched:
+            # 找到第一个未使用的匹配项
+            for match_term in intersection:
+                if match_term not in used_terms:
+                    used_terms.add(match_term)
+                    matched_keys += 1
+                    break
+            else:
+                # 所有匹配项都已使用
                 return False
         
-        return True
+        return matched_keys == len(required_keys)
 
     def execute_actions(self, action):
         """执行动作（支持多个按键）"""
@@ -227,7 +241,7 @@ class MatchEngine:
         except Exception as e:
             self.log(f"更新配置失败: {e}")
 
-    def process_match(self, roll_data):
+    def process_match(self, roll_data, update_config=True):
         """处理匹配流程"""
         if not roll_data:
             self.log("没有roll数据")
@@ -275,14 +289,16 @@ class MatchEngine:
             if self.roll_task:
                 success_action = self.roll_task.get('success', {})
                 self.execute_actions(success_action)
-            # 更新save为true，表示需要备份
-            self.update_config(save=True)
+            if update_config:
+                # 更新save为true，表示需要备份
+                self.update_config(save=True)
         else:
             # 执行失败动作
             if self.roll_task:
                 failure_action = self.roll_task.get('failure', {})
                 self.execute_actions(failure_action)
-            # 更新load为true，表示需要回档
-            self.update_config(load=True)
+            if update_config:
+                # 更新load为true，表示需要回档
+                self.update_config(load=True)
         
         return matched, match_info

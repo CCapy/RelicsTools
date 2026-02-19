@@ -10,9 +10,10 @@ from detector import ImageDetector
 
 
 class TaskExecutor:
-    def __init__(self, terminal=None, relic_reader=None):
+    def __init__(self, terminal=None, relic_reader=None, game_locker=None):
         self.terminal = terminal
         self.relic_reader = relic_reader
+        self.game_locker = game_locker
         # 初始加载配置
         self._load_config()
         # 加载数据映射
@@ -23,6 +24,10 @@ class TaskExecutor:
         self.match_engine = MatchEngine(terminal=terminal)
         # 初始化图像检测器
         self.detector = ImageDetector()
+        # 锁定相关变量
+        self.lock = False
+        self.anhen = 0
+        self.wangzheng = 0
 
     def _load_config(self):
         """重新加载配置文件"""
@@ -162,7 +167,7 @@ class TaskExecutor:
         for task in tasks:
             count += 1
             if task.get('type') == 'group':
-                actions = task.get('actions', [])
+                actions = task.get('task', [])
                 count += self._count_tasks(actions)
         return count
 
@@ -177,12 +182,30 @@ class TaskExecutor:
         
         # 显示步骤信息
         current_step = step
+        task_type = task.get('type')
+        
+        # 检查是否为lock任务且非debug模式
+        if task_type == 'lock':
+            debug_mode = False
+            try:
+                with open('config/config.json', 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+                    debug_mode = config.get('debug', False)
+            except:
+                pass
+            
+            if not debug_mode:
+                # 非debug模式，不打印信息，直接返回
+                if step == current_step:
+                    step += 1
+                return step
+        
+        # 显示步骤信息
         if tips:
             self.log(f'({current_step}/{total_steps}) {tips}')
         else:
             self.log(f'({current_step}/{total_steps}) 执行任务')
         
-        task_type = task.get('type')
         if task_type == 'key':
             key = task.get('key')
             interval = task.get('interval', 0)
@@ -215,6 +238,9 @@ class TaskExecutor:
         elif task_type == 'game':
             # 执行game任务，检测游戏界面
             self._execute_game_task(task)
+        elif task_type == 'lock':
+            # 执行lock任务，管理暗痕和王证锁定
+            self._execute_lock_task()
         else:
             # 其他类型的任务
             pass
@@ -227,6 +253,8 @@ class TaskExecutor:
     
     def _execute_roll_task(self, times=1):
         """执行roll任务，获取遗物词条"""
+        has_any_match = False
+        
         if self.relic_reader:
             # 读取并处理数据
             for i in range(times):
@@ -279,15 +307,39 @@ class TaskExecutor:
                     else:
                         self.log('负面词条3: 空')
                     
-                    # 执行匹配
-                    self.match_engine.process_match(data)
+                    # 执行匹配（不更新配置）
+                    matched, _ = self.match_engine.process_match(data, update_config=False)
+                    
+                    # 记录是否有任何一次匹配成功
+                    if matched:
+                        has_any_match = True
                     
                     # 打印结束标记
                     self.log('-' * 10)
                 else:
                     self.log('未获取到遗物数据，请确保鼠标悬停在遗物上')
+            
+            # 完成所有roll后，统一更新配置
+            self._update_config_after_roll(has_any_match)
         else:
             self.log('遗物读取器未初始化，无法获取词条信息')
+            # 在非debug模式下，默认设置为需要回档
+            self._update_config_after_roll(False)
+    
+    def _update_config_after_roll(self, has_any_match):
+        """根据roll结果更新配置"""
+        try:
+            # 使用 match_engine 的 update_config 方法，确保统一的文件操作
+            if has_any_match:
+                # 只要有一次匹配成功，设置save=true
+                self.match_engine.update_config(save=True, load=False)
+                self.log('[Roll结果] 存在匹配成功的道具，准备备份')
+            else:
+                # 完全没有匹配，设置load=true
+                self.match_engine.update_config(save=False, load=True)
+                self.log('[Roll结果] 完全没有匹配成功，准备回档')
+        except Exception as e:
+            self.log(f'更新配置失败: {e}')
 
     def execute_all_tasks(self):
         """执行所有任务"""
@@ -429,3 +481,52 @@ class TaskExecutor:
                 pydirectinput.press(key.lower())
                 # 等待指定的间隔时间
                 time.sleep(interval)
+    
+    def _execute_lock_task(self):
+        """执行lock任务，管理暗痕和王证锁定"""
+        # 检查debug模式
+        debug_mode = False
+        try:
+            with open('config/config.json', 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                debug_mode = config.get('debug', False)
+        except Exception as e:
+            # 读取失败时不打印任何信息
+            return
+        
+        if not debug_mode:
+            # 非debug模式，完全跳过，不打印任何信息
+            return
+        
+        if not self.game_locker:
+            self.log('游戏锁定器未初始化')
+            return
+        
+        try:
+            if not self.lock:
+                # 从内存中读取暗痕和王证
+                if self.game_locker.addresses.get('anhen') and self.game_locker.addresses.get('wangzheng'):
+                    self.anhen = self.game_locker.core.pm.read_int(self.game_locker.addresses['anhen'])
+                    self.wangzheng = self.game_locker.core.pm.read_int(self.game_locker.addresses['wangzheng'])
+                    self.lock = True
+                    self.log(f'[锁定]已锁定暗痕: {self.anhen}, 王证: {self.wangzheng}')
+                else:
+                    # 尝试初始化地址
+                    if self.game_locker._reinitialize():
+                        self.anhen = self.game_locker.values.get('anhen', 0)
+                        self.wangzheng = self.game_locker.values.get('wangzheng', 0)
+                        self.lock = True
+                        self.log(f'[锁定]已锁定暗痕: {self.anhen}, 王证: {self.wangzheng}')
+                    else:
+                        self.log('[锁定] 无法获取地址，锁定失败')
+            else:
+                # 修改游戏中的暗痕和王证
+                if self.game_locker.addresses.get('anhen') and self.game_locker.addresses.get('wangzheng'):
+                    self.game_locker.core.pm.write_int(self.game_locker.addresses['anhen'], self.anhen)
+                    self.game_locker.core.pm.write_int(self.game_locker.addresses['wangzheng'], self.wangzheng)
+                    self.lock = False
+                    self.log(f'[锁定]已解锁暗痕: {self.anhen}, 王证: {self.wangzheng}')
+                else:
+                    self.log('[锁定] 无法获取地址，解锁失败')
+        except Exception as e:
+            self.log(f'[锁定] 操作失败: {e}')

@@ -23,19 +23,20 @@ class App:
         self.terminal = Terminal()
         
         # 初始化游戏相关功能
+        from relic import RelicReader
+        
+        # 初始化 RelicReader（HOOK）- 无论是否debug模式都需要
+        self.relic_reader = RelicReader()
+        self.relic_reader.set_logger(self.terminal.log)
+        self.relic_reader.start()
+        
         if self.debug:
             from game import GameCore
             from locker import GameLocker
-            from relic import RelicReader
             
             # 初始化 GameCore
             self.game_core = GameCore()
             self.game_core.set_logger(self.terminal.log)
-            
-            # 初始化 RelicReader
-            self.relic_reader = RelicReader()
-            self.relic_reader.set_logger(self.terminal.log)
-            self.relic_reader.start()
             
             # 初始化 GameLocker
             self.game_locker = GameLocker(self.game_core)
@@ -43,14 +44,11 @@ class App:
             if self.game_core.attach(wait=False):
                 self.game_locker.start()
             
-            # 初始化 TaskExecutor 并传入 RelicReader
-            self.task_executor = TaskExecutor(terminal=self.terminal, relic_reader=self.relic_reader)
-            
             # 注册快捷键
             keyboard.add_hotkey('alt+2', self.toggle_lock)
-        else:
-            # 没有 debug 模式时，只初始化 TaskExecutor
-            self.task_executor = TaskExecutor(terminal=self.terminal)
+        
+        # 初始化 TaskExecutor 并传入 RelicReader 和 game_locker
+        self.task_executor = TaskExecutor(terminal=self.terminal, relic_reader=self.relic_reader, game_locker=self.game_locker)
         
         keyboard.add_hotkey('alt+0', self.close)
         keyboard.add_hotkey('alt+1', self.execute_tasks)
@@ -101,6 +99,10 @@ class App:
         
         # 清理快捷键
         keyboard.unhook_all_hotkeys()
+        
+        # 强制垃圾回收，确保所有资源被释放
+        import gc
+        gc.collect()
         
         import os
         os._exit(0)
