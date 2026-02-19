@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import messagebox
 from terminal import Terminal
 from task import TaskExecutor
 import keyboard
@@ -20,7 +21,59 @@ class App:
             config = json.load(f)
             self.debug = config.get('debug', False)
         
+        # 初始化终端，用于显示错误信息
         self.terminal = Terminal()
+        
+        # 检查 task.json 配置文件中的 id 是否存在，以及存档文件是否存在
+        import os
+        import shutil
+        
+        # 检查 task.json 配置文件
+        task_config_path = 'config/task.json'
+        if not os.path.exists(task_config_path):
+            messagebox.showerror('错误', 'config/task.json 文件不存在')
+            self.close()
+            return
+        
+        with open(task_config_path, 'r', encoding='utf-8') as f:
+            task_config = json.load(f)
+        
+        # 检查 id 是否存在
+        id = task_config.get('id')
+        if not id:
+            messagebox.showerror('错误', 'config/task.json 文件中未设置 id')
+            self.close()
+            return
+        
+        # 检查存档文件是否存在
+        appdata = os.path.expanduser('~\\AppData\\Roaming')
+        save_dir = os.path.join(appdata, 'Nightreign', id)
+        save_file = os.path.join(save_dir, 'NR0000.sl2')
+        
+        if not os.path.exists(save_file):
+            messagebox.showerror('错误', f'存档文件不存在：{save_file}')
+            self.close()
+            return
+        
+        # 确保每次启动都创建存档备份
+        backup_dir = os.path.join(appdata, 'Nightreign', 'backup', id)
+        backup_file = os.path.join(backup_dir, 'NR0000.sl2')
+        
+        # 确保备份目录存在
+        os.makedirs(backup_dir, exist_ok=True)
+        # 复制存档文件到备份目录
+        try:
+            shutil.copy2(save_file, backup_file)
+            # 同时复制备份文件
+            save_file_bak = os.path.join(save_dir, 'NR0000.sl2.bak')
+            backup_file_bak = os.path.join(backup_dir, 'NR0000.sl2.bak')
+            if os.path.exists(save_file_bak):
+                shutil.copy2(save_file_bak, backup_file_bak)
+            self.terminal.log('已创建存档备份')
+        except Exception as e:
+            messagebox.showerror('错误', f'创建备份失败：{e}')
+            self.close()
+            return
         
         # 初始化游戏相关功能
         from relic import RelicReader
@@ -98,7 +151,11 @@ class App:
             self.terminal.destroy()
         
         # 清理快捷键
-        keyboard.unhook_all_hotkeys()
+        try:
+            keyboard.unhook_all_hotkeys()
+        except Exception as e:
+            # 忽略清理快捷键时的错误
+            pass
         
         # 强制垃圾回收，确保所有资源被释放
         import gc
