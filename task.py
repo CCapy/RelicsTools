@@ -165,10 +165,11 @@ class TaskExecutor:
         """计算任务总步骤数"""
         count = 0
         for task in tasks:
-            count += 1
             if task.get('type') == 'group':
                 actions = task.get('task', [])
                 count += self._count_tasks(actions)
+            else:
+                count += 1
         return count
 
     def execute_task(self, task, step=1, total_steps=1):
@@ -200,11 +201,12 @@ class TaskExecutor:
                     step += 1
                 return step
         
-        # 显示步骤信息
-        if tips:
-            self.log(f'({current_step}/{total_steps}) {tips}')
-        else:
-            self.log(f'({current_step}/{total_steps}) 执行任务')
+        # 显示步骤信息，跳过group任务
+        if task_type != 'group':
+            if tips:
+                self.log(f'({current_step}/{total_steps}) {tips}')
+            else:
+                self.log(f'({current_step}/{total_steps}) 执行任务')
         
         if task_type == 'key':
             key = task.get('key')
@@ -221,7 +223,6 @@ class TaskExecutor:
             interval = task.get('interval', 0)
             for i in range(times):
                 for action in actions:
-                    step += 1
                     step = self.execute_task(action, step, total_steps)
                 # 如果不是最后一次执行，等待interval秒
                 if i < times - 1 and interval > 0:
@@ -245,8 +246,8 @@ class TaskExecutor:
             # 其他类型的任务
             pass
         
-        # 确保步骤至少递增1
-        if step == current_step:
+        # 确保步骤至少递增1，跳过group任务
+        if step == current_step and task_type != 'group':
             step += 1
         
         return step

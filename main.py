@@ -50,7 +50,7 @@ class App:
         # 初始化 TaskExecutor 并传入 RelicReader 和 game_locker
         self.task_executor = TaskExecutor(terminal=self.terminal, relic_reader=self.relic_reader, game_locker=self.game_locker)
         
-        keyboard.add_hotkey('alt+0', self.close)
+        keyboard.add_hotkey('num 9', self.close)
         keyboard.add_hotkey('alt+1', self.execute_tasks)
         
         # 告知用户使用快捷键
@@ -58,7 +58,7 @@ class App:
         self.terminal.log('Alt+1 - 执行任务')
         if self.debug:
             self.terminal.log('Alt+2 - 锁定/解锁暗痕和王证')
-        self.terminal.log('Alt+0 - 关闭软件')
+        self.terminal.log('小键盘 9 - 关闭软件')
         
         # 显示启动信息
         self.terminal.log('')
