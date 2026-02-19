@@ -10,6 +10,8 @@ class ImageDetector:
         """初始化图像检测器"""
         # 为每个线程创建单独的 mss 实例，解决线程安全问题
         self.local = threading.local()
+        # 模板图像缓存
+        self.template_cache = {}
     
     def _get_sct(self):
         """获取当前线程的 mss 实例"""
@@ -103,13 +105,13 @@ class ImageDetector:
             screen_np = np.array(screen_img)
             screen_gray = cv2.cvtColor(screen_np, cv2.COLOR_RGB2GRAY)
             
-            # 加载模板
-            template = cv2.imread(logo_path, cv2.IMREAD_GRAYSCALE)
+            # 使用缓存加载模板
+            template = self._load_template(logo_path)
             if template is None:
                 return False
             
-            # 尝试不同尺度的匹配，增加更多尺度选项
-            scales = np.linspace(0.3, 1.7, 20)  # 增加更多尺度
+            # 优化尺度匹配，优先检查常用尺度
+            scales = np.linspace(0.5, 1.5, 10)
             
             for scale in scales:
                 # 调整模板大小
@@ -133,3 +135,14 @@ class ImageDetector:
             return False
         except:
             return False
+    
+    def _load_template(self, logo_path: str):
+        """加载模板图像，带缓存机制"""
+        if logo_path in self.template_cache:
+            return self.template_cache[logo_path]
+        
+        template = cv2.imread(logo_path, cv2.IMREAD_GRAYSCALE)
+        if template is not None:
+            self.template_cache[logo_path] = template
+        
+        return template

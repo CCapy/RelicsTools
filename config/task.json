@@ -7,10 +7,53 @@
     2280,
     1376
   ],
-  "save": true,
+  "save": false,
   "load": true,
   "tasks": [
     {
+      "type": "load",
+      "tips": "加载配置",
+      "times": 1,
+      "delay": 0.5
+    },
+    {
+      "type": "game",
+      "tips": "等待游戏加载",
+      "image": "/asset/anhen.png",
+      "key": "f",
+      "interval": 0.1,
+      "times": 1,
+      "delay": 0.5
+    },
+    {
+      "type": "key",
+      "key": "m",
+      "tips": "打开地图",
+      "times": 1,
+      "delay": 0.5
+    },
+    {
+      "type": "key",
+      "key": "down",
+      "tips": "找到商人面板",
+      "times": 6,
+      "delay": 0
+    },
+    {
+      "type": "key",
+      "key": "f",
+      "tips": "跳转到商人",
+      "times": 1,
+      "delay": 0
+    },
+    {
+      "type": "key",
+      "key": "up",
+      "tips": "找到情景原石(无版本的)",
+      "times": 1,
+      "delay": 1.5
+    },
+    {
       "type": "key",
       "key": "f",
       "tips": "购买石头",
@@ -21,6 +64,12 @@
       "type": "key",
       "key": "down",
       "tips": "修改购买数量",
+      "times": 1,
+      "delay": 0.1
+    },
+    {
+      "type": "lock",
+      "tips": "锁定暗痕和王证数量",
       "times": 1,
       "delay": 0
     },
@@ -42,7 +91,7 @@
       "type": "roll",
       "tips": "开始筛选石头",
       "times": 10,
-      "delay": 0,
+      "delay": 0.1,
       "success": {
         "tips": "找到匹配的石头",
         "interval": 0.1,
@@ -60,60 +109,66 @@
       }
     },
     {
-      "type": "key",
-      "key": "f",
-      "tips": "退出界面",
-      "times": 1,
-      "delay": 0.1
-    },
-    {
-      "type": "key",
-      "key": "f",
-      "tips": "购买石头",
+      "type": "lock",
+      "tips": "还原暗痕和王证数量",
       "times": 1,
       "delay": 0
     },
     {
-      "type": "key",
-      "key": "down",
-      "tips": "修改购买数量",
+      "type": "group",
+      "tips": "退出游戏",
       "times": 1,
-      "delay": 0
+      "delay": 0.1,
+      "task": [
+        {
+          "type": "key",
+          "key": "esc",
+          "tips": "打开菜单",
+          "times": 2,
+          "delay": 0.1
+        },
+        {
+          "type": "key",
+          "key": "f1",
+          "tips": "选择系统菜单",
+          "times": 1,
+          "delay": 0.1
+        },
+        {
+          "type": "key",
+          "key": "up",
+          "tips": "选择结束游戏",
+          "times": 1,
+          "delay": 0.1
+        },
+        {
+          "type": "key",
+          "key": "f",
+          "tips": "确认结束游戏",
+          "times": 2,
+          "delay": 0.1
+        },
+        {
+          "type": "key",
+          "key": "left",
+          "tips": "确认退出游戏",
+          "times": 1,
+          "delay": 0.1
+        },
+        {
+          "type": "key",
+          "key": "f",
+          "tips": "确认退出游戏",
+          "times": 1,
+          "delay": 0.1
+        }
+      ]
     },
     {
-      "type": "key",
-      "key": "f",
-      "tips": "确认购买",
+      "type": "save",
+      "tips": "保存配置",
       "times": 1,
-      "delay": 0.1
-    },
-    {
-      "type": "key",
-      "key": "f",
-      "tips": "跳过动画",
-      "times": 1,
-      "delay": 0.5
-    },
-    {
-      "type": "roll",
-      "tips": "开始筛选石头",
-      "times": 10,
-      "delay": 0,
-      "success": {
-        "tips": "找到匹配的石头",
-        "interval": 0.1,
-        "key": [
-          "2",
-          "right"
-        ]
-      },
-      "failure": {
-        "tips": "没有找到匹配的石头",
-        "interval": 0.1,
-        "key": [
-          "3"
-        ]
-      }
+      "delay": 2
     }
   ]
 }
