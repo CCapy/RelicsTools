@@ -11,12 +11,6 @@
   "load": true,
   "tasks": [
     {
-      "type": "load",
-      "tips": "检查是否需要读档",
-      "times": 1,
-      "delay": 0.5
-    },
-    {
       "type": "game",
       "tips": "等待游戏加载",
       "image": "/asset/anhen.png",
@@ -48,9 +42,9 @@
     },
     {
       "type": "key",
-      "key": "up",
+      "key": "left",
       "tips": "找到情景原石(无版本的)",
-      "times": 1,
+      "times": 2,
       "delay": 1.5
     },
     {
@@ -165,7 +159,7 @@
       ]
     },
     {
-      "type": "save",
+      "type": "sl",
       "tips": "检查是否需要存档",
       "times": 1,
       "delay": 1

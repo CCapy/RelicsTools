@@ -148,7 +148,7 @@ class MatchEngine:
                     matched_name = self.data_map.get(str(matched_term), {}).get('name', matched_term)
                     return True, bd_item, f"存在({matched_term}) {matched_name}"
                 else:
-                    return True, bd_item, "匹配成功"
+                    return True, bd_item, f"匹配成功: {bd_item.get('name', '')}"
         
         return False, None, "没有满足任何构筑"
 
@@ -278,10 +278,7 @@ class MatchEngine:
         matched, bd_item, match_info = self.match_bd(positive_terms, negative_terms)
         
         # 打印匹配结果
-        if matched:
-            self.log(f"匹配成功: {match_info}")
-        else:
-            self.log(f"{match_info}")
+        self.log(match_info)
         
         # 使用预加载的roll任务配置
         if matched:

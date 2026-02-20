@@ -242,6 +242,9 @@ class TaskExecutor:
         elif task_type == 'lock':
             # 执行lock任务，管理暗痕和王证锁定
             self._execute_lock_task()
+        elif task_type == 'sl':
+            # 执行SL任务
+            self._execute_sl_task()
         else:
             # 其他类型的任务
             pass
@@ -380,40 +383,33 @@ class TaskExecutor:
         
         # 重新加载配置，确保使用最新的save值
         self._load_config()
+
+        # 获取id和路径
+        id = self.config.get('id', 'default')
+        appdata = os.path.expanduser('~\\AppData\\Roaming')
+        source_dir = os.path.join(appdata, 'Nightreign', id)
+        target_dir = os.path.join(appdata, 'Nightreign', 'backup', id)
         
-        # 检查save是否为true，如果为true则执行备份操作
-        if self.config.get('save', False):
-            # 获取id和路径
-            id = self.config.get('id', 'default')
-            appdata = os.path.expanduser('~\\AppData\\Roaming')
-            source_dir = os.path.join(appdata, 'Nightreign', id)
-            target_dir = os.path.join(appdata, 'Nightreign', 'backup', id)
-            
-            # 计算并存储NR0000.sl2的md5值
-            nr0000_path = os.path.join(source_dir, 'NR0000.sl2')
-            md5_value = self._calculate_md5(nr0000_path)
-            
-            # 确保目标目录存在
-            os.makedirs(target_dir, exist_ok=True)
-            
-            # 复制文件
-            files = ['NR0000.sl2', 'NR0000.sl2.bak']
-            for file in files:
-                source_file = os.path.join(source_dir, file)
-                target_file = os.path.join(target_dir, file)
-                if os.path.exists(source_file):
-                    shutil.copy2(source_file, target_file)
-            
-            # 设置save为false
-            self.config['save'] = False
-            with open('config/task.json', 'w', encoding='utf-8') as f:
-                json.dump(self.config, f, indent=2, ensure_ascii=False)
-            
-            # 打印备份完成信息
-            if md5_value:
-                self.log(f'已完成备份:{md5_value}')
-            else:
-                self.log('已完成备份:文件不存在')
+        # 计算并存储NR0000.sl2的md5值
+        nr0000_path = os.path.join(source_dir, 'NR0000.sl2')
+        md5_value = self._calculate_md5(nr0000_path)
+        
+        # 确保目标目录存在
+        os.makedirs(target_dir, exist_ok=True)
+        
+        # 复制文件
+        files = ['NR0000.sl2', 'NR0000.sl2.bak']
+        for file in files:
+            source_file = os.path.join(source_dir, file)
+            target_file = os.path.join(target_dir, file)
+            if os.path.exists(source_file):
+                shutil.copy2(source_file, target_file)
+        
+        # 打印备份完成信息
+        if md5_value:
+            self.log(f'已完成备份:{md5_value}')
+        else:
+            self.log('已完成备份:文件不存在')
     
     def _execute_load_task(self):
         """执行load任务，恢复存档"""
@@ -421,40 +417,42 @@ class TaskExecutor:
         
         # 重新加载配置，确保使用最新的load值
         self._load_config()
+
+        # 获取id和路径
+        id = self.config.get('id', 'default')
+        appdata = os.path.expanduser('~\\AppData\\Roaming')
+        source_dir = os.path.join(appdata, 'Nightreign', 'backup', id)
+        target_dir = os.path.join(appdata, 'Nightreign', id)
         
-        # 检查load是否为true，如果为true则执行恢复操作
-        if self.config.get('load', False):
-            # 获取id和路径
-            id = self.config.get('id', 'default')
-            appdata = os.path.expanduser('~\\AppData\\Roaming')
-            source_dir = os.path.join(appdata, 'Nightreign', 'backup', id)
-            target_dir = os.path.join(appdata, 'Nightreign', id)
-            
-            # 计算并存储NR0000.sl2的md5值
-            nr0000_path = os.path.join(source_dir, 'NR0000.sl2')
-            md5_value = self._calculate_md5(nr0000_path)
-            
-            # 确保目标目录存在
-            os.makedirs(target_dir, exist_ok=True)
-            
-            # 复制文件
-            files = ['NR0000.sl2', 'NR0000.sl2.bak']
-            for file in files:
-                source_file = os.path.join(source_dir, file)
-                target_file = os.path.join(target_dir, file)
-                if os.path.exists(source_file):
-                    shutil.copy2(source_file, target_file)
-            
-            # 设置load为false
-            self.config['load'] = False
-            with open('config/task.json', 'w', encoding='utf-8') as f:
-                json.dump(self.config, f, indent=2, ensure_ascii=False)
-            
-            # 打印加载完成信息
-            if md5_value:
-                self.log(f'已加载备份:{md5_value}')
-            else:
-                self.log('已加载备份:文件不存在')
+        # 计算并存储NR0000.sl2的md5值
+        nr0000_path = os.path.join(source_dir, 'NR0000.sl2')
+        md5_value = self._calculate_md5(nr0000_path)
+        
+        # 确保目标目录存在
+        os.makedirs(target_dir, exist_ok=True)
+        
+        # 复制文件
+        files = ['NR0000.sl2', 'NR0000.sl2.bak']
+        for file in files:
+            source_file = os.path.join(source_dir, file)
+            target_file = os.path.join(target_dir, file)
+            if os.path.exists(source_file):
+                shutil.copy2(source_file, target_file)
+        
+        # 打印加载完成信息
+        if md5_value:
+            self.log(f'已加载备份:{md5_value}')
+        else:
+            self.log('已加载备份:文件不存在')
+    
+    def _execute_sl_task(self):
+        # 重新加载配置，确保使用最新的load值
+        self._load_config()
+        """根据是否匹配成功执行save或load任务"""
+        if self.config.get('save', False):
+            self._execute_save_task()
+        else:
+            self._execute_load_task()
     
     def _execute_game_task(self, task):
         """执行game任务，检测游戏界面"""
