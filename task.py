@@ -378,6 +378,9 @@ class TaskExecutor:
         """执行save任务，备份存档"""
         import shutil
         
+        # 重新加载配置，确保使用最新的save值
+        self._load_config()
+        
         # 检查save是否为true，如果为true则执行备份操作
         if self.config.get('save', False):
             # 获取id和路径
@@ -415,6 +418,9 @@ class TaskExecutor:
     def _execute_load_task(self):
         """执行load任务，恢复存档"""
         import shutil
+        
+        # 重新加载配置，确保使用最新的load值
+        self._load_config()
         
         # 检查load是否为true，如果为true则执行恢复操作
         if self.config.get('load', False):
