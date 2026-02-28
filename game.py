@@ -1,71 +1,30 @@
-import pymem
-import pymem.process
-import time
-from typing import Callable, Optional
+import psutil
+import win32gui
+import win32process
+import win32con
 
-class GameCore:
-    def __init__(self, process_name: str = "nightreign.exe"):
-        self.process_name = process_name
-        self.pm: Optional[pymem.Pymem] = None
-        self.base_address: Optional[int] = None
-        self._log_callback: Optional[Callable[[str], None]] = None
-        self._is_attached = False
 
-    def set_logger(self, log_func: Callable[[str], None]):
-        self._log_callback = log_func
+class Game:
+    def __init__(self, config, terminal):
+        self.config = config
+        self.terminal = terminal
 
-    def log(self, message: str):
-        if self._log_callback:
-            self._log_callback(message)
-
-    def is_running(self) -> bool:
-        """检查游戏是否还在运行"""
-        if not self.pm:
-            return False
-        
-        # 使用更简单可靠的方式检测进程是否存活
-        try:
-            # 只检查进程句柄是否有效，避免频繁读取内存
-            # 如果进程已经退出，这里会抛出异常
-            if self.pm.process_handle:
-                return True
-            return False
-        except:
-            return False
-
-    def attach(self, wait: bool = False) -> bool:
-        """
-        附加到游戏
-        wait: 如果为True，会一直阻塞直到游戏启动
-        """
-        while True:
+    def get_game_pid(self):
+        for proc in psutil.process_iter(['pid', 'name']):
             try:
-                if self.pm and self.is_running():
-                    return True
-                    
-                # 清理旧的
-                self.detach()
-                
-                # 尝试新连接
-                self.pm = pymem.Pymem(self.process_name)
-                module = pymem.process.module_from_name(self.pm.process_handle, self.process_name)
-                self.base_address = module.lpBaseOfDll
-                self._is_attached = True
-                self.log(f"[Core] 游戏已连接")
-                return True
-                
-            except Exception as e:
-                if not wait:
-                    return False
-                self.log(f"[Core] 等待游戏启动...")
-                time.sleep(2)
+                if proc.info['name'].lower() == 'nightreign.exe':
+                    return proc.info['pid']
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                continue
+        return None
 
-    def detach(self):
-        self._is_attached = False
-        if self.pm:
-            try:
-                self.pm.close_process()
-            except Exception:
-                pass
-        self.pm = None
-        self.base_address = None
+    def get_hwnd_by_pid(self, pid):
+        hwnd_list = []
+
+        def callback(hwnd, extra):
+            window_pid = win32process.GetWindowThreadProcessId(hwnd)[1]
+            if window_pid == extra and win32gui.IsWindowVisible(hwnd):
+                hwnd_list.append(hwnd)
+            return True
+        win32gui.EnumWindows(callback, pid)
+        return hwnd_list[0] if hwnd_list else 0

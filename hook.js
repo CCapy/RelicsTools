@@ -5,6 +5,10 @@ function hexToPattern(hexStr) {
     return hexStr.replace(/ /g, '');
 }
 
+function val(v) {
+    return v == 0xFFFFFFFF ? null : v;
+}
+
 rpc.exports = {
     init: function () {
         var m = Process.enumerateModules()[0];
@@ -15,23 +19,35 @@ rpc.exports = {
                 break;
             }
         }
+        var last_r8 = null;
 
         Memory.scan(m.base, m.size, hexToPattern(AOB_PATTERN), {
             onMatch: function (address, size) {
-                console.log("HOOK已经写入: " + address.toString(16));
+                console.log("[HOOK]已经写入: " + address.toString(16));
                 Interceptor.attach(address, {
                     onEnter: function (args) {
-                        var rdx = this.context.rdx.toInt32();
-                        var r8 = this.context.r8;
-
-                        if (rdx === 0) {
+                        if (this.context.rdx.toInt32() === 0) {
+                            let r8 = this.context.r8.toString();
+                            if (r8 === last_r8) {
+                                return;
+                            }
+                            last_r8 = r8;
                             try {
-                                var offsets = [0x18, 0x40, 0x1C, 0x44, 0x20, 0x48];
-                                var raw_entries = [];
-                                for (var i = 0; i < offsets.length; i++) {
-                                    raw_entries.push(r8.add(offsets[i]).readU32());
+                                let buff_offsets = [0x18, 0x1C, 0x20];
+                                let debuff_offsets = [0x40, 0x44, 0x48];
+                                let buff = [];
+                                let debuff = [];
+                                for (var i = 0; i < debuff_offsets.length; i++) {
+                                    let buff_val = val(this.context.r8.add(buff_offsets[i]).readU32());
+                                    if (buff_val !== null) {
+                                        buff.push(buff_val);
+                                    }
+                                    let debuff_val = val(this.context.r8.add(debuff_offsets[i]).readU32());
+                                    if (debuff_val !== null) {
+                                        debuff.push(debuff_val);
+                                    }
                                 }
-                                send({ "ptr": r8.toString(16), "raw_entries": raw_entries });
+                                send({ "buff": buff, "debuff": debuff });
                             } catch (e) { }
                         }
                     }
