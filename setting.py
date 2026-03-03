@@ -195,6 +195,37 @@ class EditFilterWindow:
         ttk.Radiobutton(type_buttons_frame, text="可选词条", value="extra", variable=self.type_var, command=self.update_pool).pack(side=tk.LEFT, padx=5)
         ttk.Radiobutton(type_buttons_frame, text="黑名单词条", value="ban", variable=self.type_var, command=self.update_pool).pack(side=tk.LEFT, padx=5)
         
+        # 过滤行
+        self.filter_frame = ttk.Frame(self.left_frame, padding="5")
+        self.filter_frame.pack(fill=tk.X)
+        
+        ttk.Label(self.filter_frame, text="过滤:", width=10, anchor=tk.W).pack(side=tk.LEFT, padx=(0, 10))
+        
+        # 过滤选项
+        self.filter_options = {
+            "3 必选": 30,
+            "2 必选 | 1 可选": 21,
+            "2 必选": 20,
+            "1 必选 | 2 可选": 12,
+            "1 必选 | 1 可选": 11,
+            "1 必选": 10,
+            "3 可选": 3,
+            "2 可选": 2,
+            "1 可选": 1,
+            "无": 0
+        }
+        
+        # 创建下拉框
+        self.filter_var = tk.StringVar()
+        # 默认选中"2 必选"
+        self.filter_var.set("2 必选")
+        # 更新score值
+        self.filter_data["score"] = self.filter_options["2 必选"]
+        
+        filter_combobox = ttk.Combobox(self.filter_frame, textvariable=self.filter_var, values=list(self.filter_options.keys()), width=38, state="readonly")
+        filter_combobox.pack(side=tk.LEFT, expand=True, anchor=tk.W)
+        filter_combobox.bind("<<ComboboxSelected>>", self.on_filter_selected)
+        
         # 搜索行
         self.search_frame = ttk.Frame(self.left_frame, padding="5")
         self.search_frame.pack(fill=tk.X)
@@ -305,6 +336,13 @@ class EditFilterWindow:
         self.search_var.set("")
         # 更新池子
         self.update_pool()
+    
+    def on_filter_selected(self, event):
+        # 获取选中的选项
+        selected_option = self.filter_var.get()
+        # 更新score值
+        if selected_option in self.filter_options:
+            self.filter_data["score"] = self.filter_options[selected_option]
     
     def update_pool(self, event=None):
         # 清空词条池子
