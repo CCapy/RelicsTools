@@ -1,0 +1,32 @@
+{
+    "filter_options": {
+        "3 必选": 30,
+        "2 必选 | 1 可选": 21,
+        "2 必选": 20,
+        "1 必选 | 2 可选": 12,
+        "1 必选 | 1 可选": 11,
+        "1 必选": 10,
+        "3 可选": 3,
+        "2 可选": 2,
+        "1 可选": 1,
+        "无": 0
+    },
+    "default_build": {
+        "name": "新构筑",
+        "must": [],
+        "extra": [],
+        "ban": [],
+        "score": 11
+    },
+    "window": {
+        "title": "编辑构筑",
+        "width": 1000,
+        "height": 700
+    },
+    "file_paths": {
+        "filters": "config/filters.json",
+        "entries": "asset/entry.json",
+        "blacklist": "asset/blacklist.json",
+        "icon": "asset/setting.png"
+    }
+}
