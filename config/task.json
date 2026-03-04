@@ -16,7 +16,7 @@
     },
     {
       "type": "key",
-      "key": "up",
+      "key": "down",
       "tips": "修改购买数量",
       "times": 1,
       "delay": 0.1
@@ -37,7 +37,7 @@
     {
       "type": "filter",
       "tips": "筛选词条",
-      "times": 2,
+      "times": 10,
       "delay": 0.1,
       "data": {
         "success": {

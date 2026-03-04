@@ -56,12 +56,8 @@ class Filter:
         self._update_rules(rules_data)
 
     def _calculate_score(self, item: Item, rule: FilterRule) -> int:
-        """内部方法：计算单个物品在单个规则下的得分（时间复杂度O(len(item.buff))）"""
-        # 第一步：检查黑名单，一票否决（提前终止）
         if item.debuff & rule.ban:
-            return -1  # 用-1表示“含黑名单，直接失败”，区别于“得分0”
-        
-        # 第二步：单次遍历buff，统计得分（只循环1次）
+            return -1
         must_count = 0
         extra_count = 0
         for tag in item.buff:
@@ -69,27 +65,19 @@ class Filter:
                 must_count += 1
             elif tag in rule.extra:
                 extra_count += 1
-        
-        # 第三步：计算总分
         return must_count * 10 + extra_count * 1
 
-    def match(self, item: Item) -> bool:
-        """【主入口】检查物品是否匹配任意规则"""
+    def match(self, item: Item) -> (bool, int):
+        score = 0
         for rule in self._rules:
             score = self._calculate_score(item, rule)
-            
-            # 边界情况1：含黑名单，直接失败
             if score == -1:
                 continue
-            
-            # 边界情况2：阈值是0时，必须至少有1个must或extra词条
             if rule.score == 0:
-                if score > 0:  # 得分>0表示有至少1个must或extra
-                    return True
+                if score > 0: 
+                    return True,score
                 else:
-                    continue
-            
-            # 正常情况：得分 >= 阈值
+                    continue            
             if score >= rule.score:
-                return True
-        return False
+                return True,score
+        return False, score

@@ -107,7 +107,7 @@ class Task:
             self.last_game_item = gameItems
 
             item =  Item.from_dict(gameItems)
-            is_matched = self.filter.match(item)
+            is_matched,score = self.filter.match(item)
             nums = "-"*5 +str(i+1) + "/" + str(times) + "-" * 5
             self.terminal.logs(nums)
             print(nums)
@@ -130,9 +130,11 @@ class Task:
                     debuff = "无"
                 self.terminal.logs("词条"+ str(i+1)+":"+debuff)
                 print("词条"+ str(i+1)+":"+debuff)
+            self.terminal.logs("匹配得分:"+str(score))
+            print("匹配得分:"+str(score))
 
-            self.terminal.logs("-"*15)
-            print("-"*15)
+            # self.terminal.logs("-"*15)
+            # print("-"*15)
             
             if is_matched:
                 self.terminal.logs("匹配成功")

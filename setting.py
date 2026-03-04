@@ -5,11 +5,13 @@ from tkinter import messagebox, ttk
 
 
 class ConfigManager:
+    """配置管理器，负责读取和管理配置文件"""
     def __init__(self):
         self.config_path = Path("config/config.json")
         self.config = self.load_config()
     
     def load_config(self):
+        """加载配置文件"""
         try:
             with open(self.config_path, "r", encoding="utf-8") as f:
                 return json.load(f)
@@ -18,6 +20,7 @@ class ConfigManager:
             return self.get_default_config()
     
     def get_default_config(self):
+        """获取默认配置"""
         return {
             "filter_options": {
                 "3 必选": 30,
@@ -52,6 +55,7 @@ class ConfigManager:
         }
     
     def get(self, key, default=None):
+        """获取配置值"""
         keys = key.split(".")
         value = self.config
         for k in keys:
@@ -67,6 +71,7 @@ config_manager = ConfigManager()
 
 
 class BuildSelector:
+    """构筑选择器，负责构筑的选择、复制、添加和删除"""
     def __init__(self, parent, main_app, current_index, filter_options, on_build_selected):
         self.parent = parent
         self.main_app = main_app
@@ -94,35 +99,38 @@ class BuildSelector:
         self.update_build_options()
     
     def update_build_options(self):
+        """更新构筑选择选项"""
         self.build_options = []
         for i, build in enumerate(self.main_app.filters):
             name = build.get("name", "")
-            must_len = len(build.get("must", []))
-            extra_len = len(build.get("extra", []))
-            ban_len = len(build.get("ban", []))
-            score = build.get("score", 0)
-            
-            filter_text = self.get_filter_text(score)
-            option_text = f"{name}|{must_len}必选|{extra_len}可选|{ban_len}黑名单|满足{filter_text}"
+            # 只显示构筑名
+            option_text = name
             self.build_options.append((option_text, i))
         
         self.build_combobox['values'] = [option[0] for option in self.build_options]
         
+        # 找到当前索引对应的选项
         current_option = None
-        for option_text, i in self.build_options:
+        current_index_in_options = -1
+        for idx, (option_text, i) in enumerate(self.build_options):
             if i == self.current_index:
                 current_option = option_text
+                current_index_in_options = idx
                 break
+        
         if current_option:
-            self.build_var.set(current_option)
+            # 直接设置combobox的当前选项，避免触发事件
+            self.build_combobox.current(current_index_in_options)
     
     def get_filter_text(self, score):
+        """根据分数获取过滤选项文本"""
         for option, score_value in self.filter_options.items():
             if score_value == score:
                 return option
         return "无"
     
     def on_combobox_selected(self, event):
+        """选择构筑时的处理"""
         selected_option = self.build_var.get()
         for option_text, i in self.build_options:
             if option_text == selected_option:
@@ -130,6 +138,7 @@ class BuildSelector:
                 break
     
     def copy_build(self):
+        """复制当前构筑"""
         # 检查当前索引是否有效
         if not self.main_app.filters or self.current_index >= len(self.main_app.filters):
             messagebox.showerror("错误", "没有可复制的构筑")
@@ -156,6 +165,7 @@ class BuildSelector:
         return new_index
     
     def add_build(self):
+        """添加新构筑"""
         new_build = config_manager.get("default_build").copy()
         self.main_app.filters.append(new_build)
         self.main_app.save_filters()
@@ -173,6 +183,7 @@ class BuildSelector:
         return new_index
     
     def delete_build(self):
+        """删除当前构筑"""
         # 检查当前索引是否有效
         if not self.main_app.filters or self.current_index >= len(self.main_app.filters):
             messagebox.showerror("错误", "没有可删除的构筑")
@@ -184,39 +195,37 @@ class BuildSelector:
             return None
         
         if len(self.main_app.filters) == 1:
-            current_build = self.main_app.filters[0]
-            is_empty = len(current_build.get("must", [])) == 0 and len(current_build.get("extra", [])) == 0 and len(current_build.get("ban", [])) == 0
-            
-            if is_empty:
-                messagebox.showinfo("提示", "至少需要保留一个构筑")
-                return None
-            else:
-                # 删除当前构筑并创建一个空的构筑
-                self.main_app.filters.pop(self.current_index)
-                empty_build = config_manager.get("default_build").copy()
-                self.main_app.filters.append(empty_build)
-                self.main_app.save_filters()
-                
-                # 更新选择框选项并设置聚焦到新创建的空构筑
-                self.current_index = 0
-                self.update_build_options()
-                # 通知 EditFilterWindow 切换构筑
-                self.on_build_selected(0)
-                return 0
-        else:
-            # 删除当前构筑
-            self.main_app.filters.pop(self.current_index)
+            # 删除当前构筑并创建一个空的构筑
+            self.main_app.filters.pop(0)
+            empty_build = config_manager.get("default_build").copy()
+            self.main_app.filters.append(empty_build)
             self.main_app.save_filters()
             
-            # 更新选择框选项并设置聚焦到第一个构筑
+            # 更新选择框选项并设置聚焦到新创建的空构筑
             self.current_index = 0
             self.update_build_options()
             # 通知 EditFilterWindow 切换构筑
             self.on_build_selected(0)
             return 0
+        else:
+            # 直接删除当前索引的构筑
+            self.main_app.filters.pop(self.current_index)
+            self.main_app.save_filters()
+            
+            # 更新选择框选项并设置聚焦到合适的构筑
+            # 如果删除后索引超出范围，聚焦到最后一个
+            if self.current_index >= len(self.main_app.filters):
+                self.current_index = len(self.main_app.filters) - 1
+            
+            # 先更新选择框选项
+            self.update_build_options()
+            # 然后通知 EditFilterWindow 切换构筑
+            self.on_build_selected(self.current_index)
+            return self.current_index
 
 
-class EntryPool:
+class PoolBase:
+    """池子基类，提取EntryPool和BuildPool的共同代码"""
     def __init__(self, parent, entries, blacklist, filter_data, type_var, search_var, on_double_click):
         self.parent = parent
         self.entries = entries
@@ -226,7 +235,12 @@ class EntryPool:
         self.search_var = search_var
         self.on_double_click = on_double_click
         
-        self.frame = ttk.LabelFrame(parent, text="词条池子", padding="5")
+        self.tree = None
+        self._setup_ui()
+    
+    def _setup_ui(self):
+        """设置UI界面"""
+        self.frame = ttk.LabelFrame(self.parent, text=self._get_frame_title(), padding="5")
         self.frame.pack(fill=tk.BOTH, expand=True, pady=5)
         
         self.tree = ttk.Treeview(self.frame, columns=("id", "name", "superposability"), show="headings")
@@ -246,7 +260,38 @@ class EntryPool:
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.tree.pack(fill=tk.BOTH, expand=True)
     
+    def _get_frame_title(self):
+        """获取框架标题"""
+        raise NotImplementedError("子类必须实现此方法")
+    
     def update(self):
+        """更新池子内容"""
+        raise NotImplementedError("子类必须实现此方法")
+    
+    def get_selection(self):
+        """获取选中的项"""
+        return self.tree.selection()
+    
+    def get_children(self):
+        """获取所有子项"""
+        return self.tree.get_children()
+    
+    def selection_set(self, item):
+        """设置选中项"""
+        self.tree.selection_set(item)
+    
+    def focus(self, item):
+        """设置焦点项"""
+        self.tree.focus(item)
+
+
+class EntryPool(PoolBase):
+    """词条池子，显示可添加的词条"""
+    def _get_frame_title(self):
+        return "词条池子"
+    
+    def update(self):
+        """更新词条池子内容"""
         for item in self.tree.get_children():
             self.tree.delete(item)
         
@@ -280,51 +325,15 @@ class EntryPool:
                                 entry_data.get("name", ""), 
                                 entry_data.get("superposability", "")
                             ))
-    
-    def get_selection(self):
-        return self.tree.selection()
-    
-    def get_children(self):
-        return self.tree.get_children()
-    
-    def selection_set(self, item):
-        self.tree.selection_set(item)
-    
-    def focus(self, item):
-        self.tree.focus(item)
 
 
-class BuildPool:
-    def __init__(self, parent, entries, blacklist, filter_data, type_var, search_var, on_double_click):
-        self.parent = parent
-        self.entries = entries
-        self.blacklist = blacklist
-        self.filter_data = filter_data
-        self.type_var = type_var
-        self.search_var = search_var
-        self.on_double_click = on_double_click
-        
-        self.frame = ttk.LabelFrame(parent, text="构筑池子", padding="5")
-        self.frame.pack(fill=tk.BOTH, expand=True, pady=5)
-        
-        self.tree = ttk.Treeview(self.frame, columns=("id", "name", "superposability"), show="headings")
-        self.tree.heading("id", text="ID", anchor=tk.CENTER)
-        self.tree.heading("name", text="词条名", anchor=tk.CENTER)
-        self.tree.heading("superposability", text="叠加", anchor=tk.CENTER)
-        
-        # 增加列宽以更好地利用空间
-        self.tree.column("id", width=70, anchor=tk.CENTER)
-        self.tree.column("name", width=400)
-        self.tree.column("superposability", width=100, anchor=tk.CENTER)
-        
-        self.tree.bind("<Double-1>", self.on_double_click)
-        
-        scrollbar = ttk.Scrollbar(self.frame, orient=tk.VERTICAL, command=self.tree.yview)
-        self.tree.configure(yscroll=scrollbar.set)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.tree.pack(fill=tk.BOTH, expand=True)
+class BuildPool(PoolBase):
+    """构筑池子，显示已添加的词条"""
+    def _get_frame_title(self):
+        return "构筑池子"
     
     def update(self):
+        """更新构筑池子内容"""
         for item in self.tree.get_children():
             self.tree.delete(item)
         
@@ -344,21 +353,10 @@ class BuildPool:
                     entry_data.get("name", ""), 
                     entry_data.get("superposability", "")
                 ))
-    
-    def get_selection(self):
-        return self.tree.selection()
-    
-    def get_children(self):
-        return self.tree.get_children()
-    
-    def selection_set(self, item):
-        self.tree.selection_set(item)
-    
-    def focus(self, item):
-        self.tree.focus(item)
 
 
 class DetailView:
+    """详情视图，显示词条详情"""
     def __init__(self, parent, entries, blacklist, type_var):
         self.parent = parent
         self.entries = entries
@@ -372,6 +370,7 @@ class DetailView:
         self.text.pack(fill=tk.BOTH, expand=True)
     
     def update(self, entry_id):
+        """更新详情内容"""
         self.text.config(state=tk.NORMAL)
         self.text.delete(1.0, tk.END)
         
@@ -395,6 +394,7 @@ class DetailView:
 
 
 class MainApp:
+    """主应用，负责初始化和文件检查"""
     def __init__(self, root):
         self.root = root
         
@@ -417,6 +417,7 @@ class MainApp:
         self.edit_window = EditFilterWindow(root, self.filters[0], 0, self)
     
     def check_required_files(self):
+        """检查必要的文件和目录"""
         # 检查必要的目录和文件
         required_paths = [
             Path("config"),
@@ -440,6 +441,7 @@ class MainApp:
         return True
     
     def load_filters(self):
+        """加载构筑配置"""
         try:
             with open(self.filters_path, "r", encoding="utf-8") as f:
                 return json.load(f)
@@ -448,6 +450,7 @@ class MainApp:
             return []
     
     def save_filters(self):
+        """保存构筑配置"""
         try:
             # 确保目录存在
             self.filters_path.parent.mkdir(parents=True, exist_ok=True)
@@ -456,7 +459,9 @@ class MainApp:
         except Exception as e:
             messagebox.showerror("错误", f"保存文件失败: {e}")
 
+
 class EditFilterWindow:
+    """编辑构筑窗口，负责构筑的编辑和管理"""
     def __init__(self, parent, filter_data, index, main_app):
         self.parent = parent
         self.filter_data = filter_data.copy()
@@ -520,6 +525,8 @@ class EditFilterWindow:
         self.name_var = tk.StringVar(value=self.filter_data.get("name", ""))
         # 增加宽度以更好地利用空间
         ttk.Entry(self.name_frame, textvariable=self.name_var, width=60).pack(side=tk.LEFT, expand=True, anchor=tk.W)
+        # 绑定名称变化事件，自动保存修改
+        self.name_var.trace_add("write", self.on_name_change)
         
         # 第二行：类型选择按钮
         self.type_frame = ttk.Frame(self.left_frame, padding="5")
@@ -594,14 +601,11 @@ class EditFilterWindow:
         self.clear_build_button = ttk.Button(self.button_frame, text="清空构筑", command=self.clear_build)
         self.clear_build_button.pack(side=tk.LEFT, padx=5)
         
-        # 保存按钮
-        self.save_button = ttk.Button(self.button_frame, text="保存", command=self.save)
-        self.save_button.pack(side=tk.RIGHT, padx=5)
-        
         # 更新池子
         self.update_pool()
     
     def center_window(self, window, width, height):
+        """窗口居中"""
         # 获取屏幕宽度和高度
         screen_width = window.winfo_screenwidth()
         screen_height = window.winfo_screenheight()
@@ -614,6 +618,7 @@ class EditFilterWindow:
         window.geometry(f"{width}x{height}+{x}+{y}")
     
     def load_entries(self):
+        """加载词条数据"""
         # 加载entry.json和blacklist.json
         try:
             with open(self.entries_path, "r", encoding="utf-8") as f:
@@ -627,19 +632,31 @@ class EditFilterWindow:
             self.blacklist = {}
     
     def clear_search(self):
+        """清空搜索框"""
         # 清空搜索框
         self.search_var.set("")
         # 更新池子
         self.update_pool()
     
     def on_filter_selected(self, event):
+        """选择过滤选项时的处理"""
         # 获取选中的选项
         selected_option = self.filter_var.get()
         # 更新score值
         if selected_option in self.filter_options:
             self.filter_data["score"] = self.filter_options[selected_option]
+            # 自动保存修改
+            self._save_current_build()
+    
+    def on_name_change(self, *args):
+        """构筑名变化时的处理"""
+        # 自动保存修改
+        self._save_current_build()
+        # 同步更新选择框内容
+        self.build_selector.update_build_options()
     
     def update_pool(self, event=None):
+        """更新池子内容"""
         # 更新 EntryPool 和 BuildPool 中的 filter_data 引用
         self.entry_pool.filter_data = self.filter_data
         self.build_pool.filter_data = self.filter_data
@@ -649,86 +666,83 @@ class EditFilterWindow:
         self.build_pool.update()
     
     def move_to_build_pool(self, event):
+        """将词条从词条池子移动到构筑池子"""
         # 获取选中的项
         selected_item = self.entry_pool.get_selection()
-        if selected_item:
-            entry_id = selected_item[0]
-            current_type = self.type_var.get()
-            
-            # 必选和可选互斥
-            if current_type == "must":
-                # 如果词条在可选池子中，从可选池子中移除
-                if "extra" in self.filter_data and entry_id in self.filter_data["extra"]:
-                    self.filter_data["extra"].remove(entry_id)
-            elif current_type == "extra":
-                # 如果词条在必选池子中，从必选池子中移除
-                if "must" in self.filter_data and entry_id in self.filter_data["must"]:
-                    self.filter_data["must"].remove(entry_id)
-            
-            # 添加到构筑池子
-            if entry_id not in self.filter_data.get(current_type, []):
-                if current_type not in self.filter_data:
-                    self.filter_data[current_type] = []
-                self.filter_data[current_type].append(entry_id)
-            
-            # 保存当前选中项的索引
-            items = self.entry_pool.get_children()
-            current_index = -1
-            if items:
-                try:
-                    current_index = items.index(entry_id)
-                except ValueError:
-                    pass
-            
-            # 更新池子
-            self.update_pool()
-            
-            # 自动聚焦到下一项
-            new_items = self.entry_pool.get_children()
-            if new_items:
-                # 计算新的聚焦索引
-                new_index = current_index if current_index < len(new_items) else current_index - 1
-                if new_index < 0:
-                    new_index = 0
-                # 聚焦到新的项
-                self.entry_pool.selection_set(new_items[new_index])
-                self.entry_pool.focus(new_items[new_index])
+        if not selected_item:
+            return
+        
+        entry_id = selected_item[0]
+        current_type = self.type_var.get()
+        
+        # 必选和可选互斥
+        if current_type == "must":
+            # 如果词条在可选池子中，从可选池子中移除
+            if "extra" in self.filter_data and entry_id in self.filter_data["extra"]:
+                self.filter_data["extra"].remove(entry_id)
+        elif current_type == "extra":
+            # 如果词条在必选池子中，从必选池子中移除
+            if "must" in self.filter_data and entry_id in self.filter_data["must"]:
+                self.filter_data["must"].remove(entry_id)
+        
+        # 添加到构筑池子
+        if entry_id not in self.filter_data.get(current_type, []):
+            if current_type not in self.filter_data:
+                self.filter_data[current_type] = []
+            self.filter_data[current_type].append(entry_id)
+        
+        # 保存当前选中项的索引
+        items = self.entry_pool.get_children()
+        current_index = -1
+        if items:
+            try:
+                current_index = items.index(entry_id)
+            except ValueError:
+                pass
+        
+        # 更新池子
+        self.update_pool()
+        
+        # 自动保存修改
+        self._save_current_build()
+        
+        # 自动聚焦到下一项
+        self._auto_focus_next_item(self.entry_pool, items, current_index)
     
     def move_to_entry_pool(self, event):
+        """将词条从构筑池子移动到词条池子"""
         # 获取选中的项
         selected_item = self.build_pool.get_selection()
-        if selected_item:
-            entry_id = selected_item[0]
-            current_type = self.type_var.get()
-            
-            # 从构筑池子中移除
-            if current_type in self.filter_data and entry_id in self.filter_data[current_type]:
-                self.filter_data[current_type].remove(entry_id)
-            
-            # 保存当前选中项的索引
-            items = self.build_pool.get_children()
-            current_index = -1
-            if items:
-                try:
-                    current_index = items.index(entry_id)
-                except ValueError:
-                    pass
-            
-            # 更新池子
-            self.update_pool()
-            
-            # 自动聚焦到下一项
-            new_items = self.build_pool.get_children()
-            if new_items:
-                # 计算新的聚焦索引
-                new_index = current_index if current_index < len(new_items) else current_index - 1
-                if new_index < 0:
-                    new_index = 0
-                # 聚焦到新的项
-                self.build_pool.selection_set(new_items[new_index])
-                self.build_pool.focus(new_items[new_index])
+        if not selected_item:
+            return
+        
+        entry_id = selected_item[0]
+        current_type = self.type_var.get()
+        
+        # 从构筑池子中移除
+        if current_type in self.filter_data and entry_id in self.filter_data[current_type]:
+            self.filter_data[current_type].remove(entry_id)
+        
+        # 保存当前选中项的索引
+        items = self.build_pool.get_children()
+        current_index = -1
+        if items:
+            try:
+                current_index = items.index(entry_id)
+            except ValueError:
+                pass
+        
+        # 更新池子
+        self.update_pool()
+        
+        # 自动保存修改
+        self._save_current_build()
+        
+        # 自动聚焦到下一项
+        self._auto_focus_next_item(self.build_pool, items, current_index)
     
     def update_detail(self, event):
+        """更新详情内容"""
         # 检查是哪个树被点击
         widget = event.widget
         selected_item = widget.selection()
@@ -739,58 +753,51 @@ class EditFilterWindow:
         else:
             self.detail_view.update(None)
     
-    def save(self):
-        # 更新构筑名
-        self.filter_data["name"] = self.name_var.get()
-        
-        # 保存到主应用
-        self.main_app.filters[self.index] = self.filter_data
-        self.main_app.save_filters()
-        
-        # 更新构筑选择下拉框
-        self.build_selector.update_build_options()
-    
     def clear_pool(self):
+        """清空当前类型的池子"""
         # 弹出提示框
         result = messagebox.askyesno("清空池子", "是否清空当前构筑的池子？")
-        if result:
-            # 清空当前类型的池子
-            current_type = self.type_var.get()
-            if current_type in self.filter_data:
-                self.filter_data[current_type] = []
-            # 更新池子
-            self.update_pool()
+        if not result:
+            return
+        
+        # 清空当前类型的池子
+        current_type = self.type_var.get()
+        if current_type in self.filter_data:
+            self.filter_data[current_type] = []
+        # 更新池子
+        self.update_pool()
+        # 自动保存修改
+        self._save_current_build()
     
     def clear_build(self):
+        """清空当前构筑"""
         # 弹出提示框
         result = messagebox.askyesno("清空构筑", "是否清空当前构筑？")
-        if result:
-            # 清空必选、可选、黑名单
-            self.filter_data["must"] = []
-            self.filter_data["extra"] = []
-            self.filter_data["ban"] = []
-            # 重置过滤为默认值（1必选1可选）
-            self.filter_data["score"] = 11
-            # 找到对应的过滤选项
-            filter_text = "无"
-            for option, score_value in self.filter_options.items():
-                if score_value == 11:
-                    filter_text = option
-                    break
-            self.filter_var.set(filter_text)
-            # 重置搜索
-            self.search_var.set("")
-            # 更新池子
-            self.update_pool()
+        if not result:
+            return
+        
+        # 清空必选、可选、黑名单
+        self.filter_data["must"] = []
+        self.filter_data["extra"] = []
+        self.filter_data["ban"] = []
+        # 重置过滤为默认值（1必选1可选）
+        self.filter_data["score"] = 11
+        # 找到对应的过滤选项
+        filter_text = "无"
+        for option, score_value in self.filter_options.items():
+            if score_value == 11:
+                filter_text = option
+                break
+        self.filter_var.set(filter_text)
+        # 重置搜索
+        self.search_var.set("")
+        # 更新池子
+        self.update_pool()
+        # 自动保存修改
+        self._save_current_build()
     
     def on_build_selected(self, new_index):
-        # 保存当前构筑的修改
-        self.filter_data["name"] = self.name_var.get()
-        # 检查索引是否有效
-        if 0 <= self.index < len(self.main_app.filters):
-            self.main_app.filters[self.index] = self.filter_data
-            self.main_app.save_filters()
-        
+        """选择构筑时的处理"""
         # 检查新索引是否有效
         if 0 <= new_index < len(self.main_app.filters):
             # 更新当前窗口显示选中的构筑
@@ -816,6 +823,7 @@ class EditFilterWindow:
             messagebox.showerror("错误", "选中的构筑不存在")
     
     def copy_build(self):
+        """复制当前构筑"""
         new_index = self.build_selector.copy_build()
         if new_index is not None:
             # 切换到新复制的构筑
@@ -839,6 +847,7 @@ class EditFilterWindow:
             self.update_pool()
     
     def add_build(self):
+        """添加新构筑"""
         new_index = self.build_selector.add_build()
         if new_index is not None:
             # 切换到新构筑
@@ -855,13 +864,13 @@ class EditFilterWindow:
             self.update_pool()
     
     def delete_build(self):
+        """删除当前构筑"""
         new_index = self.build_selector.delete_build()
         if new_index is not None:
             # 切换到新构筑
             self.filter_data = self.main_app.filters[new_index].copy()
             self.original_data = self.main_app.filters[new_index].copy()
             self.index = new_index
-            self.build_selector.current_index = new_index
             
             # 更新界面
             self.name_var.set(self.filter_data.get("name", ""))
@@ -878,14 +887,33 @@ class EditFilterWindow:
             self.update_pool()
     
     def on_close(self):
-        # 检查是否有修改
-        if self.filter_data != self.original_data or self.name_var.get() != self.original_data.get("name", ""):
-            # 提示用户是否保存
-            result = messagebox.askyesno("保存", "是否保存修改？")
-            if result:
-                self.save()
+        """窗口关闭时的处理"""
+        # 自动保存当前构筑的修改
+        self._save_current_build()
         # 关闭窗口
         self.window.destroy()
+    
+    def _save_current_build(self):
+        """保存当前构筑的修改"""
+        # 更新构筑名
+        self.filter_data["name"] = self.name_var.get()
+        # 检查索引是否有效
+        if 0 <= self.index < len(self.main_app.filters):
+            self.main_app.filters[self.index] = self.filter_data
+            self.main_app.save_filters()
+    
+    def _auto_focus_next_item(self, pool, items, current_index):
+        """自动聚焦到下一项"""
+        new_items = pool.get_children()
+        if new_items:
+            # 计算新的聚焦索引
+            new_index = current_index if current_index < len(new_items) else current_index - 1
+            if new_index < 0:
+                new_index = 0
+            # 聚焦到新的项
+            pool.selection_set(new_items[new_index])
+            pool.focus(new_items[new_index])
+
 
 if __name__ == "__main__":
     root = tk.Tk()
