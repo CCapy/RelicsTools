@@ -22,10 +22,10 @@
       "delay": 0.1
     },
     {
-      "type": "lock",
-      "tips": "锁定购买数量",
+      "type": "get",
+      "tips": "获取资源数量",
       "times": 1,
-      "delay": 0.1
+      "delay": 0
     },
     {
       "type": "key",
@@ -33,6 +33,12 @@
       "tips": "确认购买",
       "times": 2,
       "delay": 0.1
+    },
+    {
+      "type": "get",
+      "tips": "获取资源数量",
+      "times": 1,
+      "delay": 0
     },
     {
       "type": "filter",
@@ -65,10 +71,10 @@
       "delay": 0
     },
     {
-      "type": "lock",
+      "type": "set",
       "tips": "解锁购买数量",
       "times": 1,
-      "delay": 0.1
+      "delay": 0
     }
   ]
 }

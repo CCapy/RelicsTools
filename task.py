@@ -29,6 +29,14 @@ class Task:
         self.total = total
         self.anhen = -1
         self.wangzheng = -1
+        self.anhen_lock = -1
+        self.wangzheng_lock = -1
+
+        self.quantity = -1
+        self.expense_anhen = 0
+        self.expense_wangzheng = 0
+        # 匹配次数
+        self.match_count = 0
 
     def load_tasks(self):
         self.config.load_task_data()
@@ -66,26 +74,56 @@ class Task:
             data = task.get('data', {})
             self._task_filter(times, delay, data)
             self.config.save_total_data(self.total.get_all())
-        elif task.get("type") == "lock":
-            debug = self.config.get_debug_data()
-            if debug.get("lock", False):
-                self._task_lock()
-        pass
-    def _task_lock(self):
+        elif task.get("type") == "get":
+            self._task_get()
+        elif task.get("type") == "set":
+            self._task_set()
+        
+    def _task_get(self):
         if self.anhen == -1:
             self.anhen = self.reader.get_anhen()
+            self.anhen_lock = self.anhen
             self.terminal.logs(f"[任务]获取到当前暗痕值: {self.anhen}")
+            self.quantity = self.reader.get_quantity()
         else:
-            self.reader.set_anhen(self.anhen)
-            self.terminal.logs(f"[任务]设置暗痕值为: {self.anhen}")
+            anhen = self.reader.get_anhen()
+            self.expense_anhen =  self.anhen - anhen
             self.anhen = -1
+
         if self.wangzheng == -1:
             self.wangzheng = self.reader.get_wangzheng()
+            self.wangzheng_lock = self.wangzheng
             self.terminal.logs(f"[任务]获取到当前王证值: {self.wangzheng}")
         else:
-            self.reader.set_wangzheng(self.wangzheng)
-            self.terminal.logs(f"[任务]设置王证值为: {self.wangzheng}")
+            wangzheng = self.reader.get_wangzheng()
+            self.expense_wangzheng = self.wangzheng - wangzheng
             self.wangzheng = -1
+
+    def _task_set(self):
+        debug = self.config.get_debug_data()
+        anhen_price = -1
+        wangzheng_price = -1
+
+        if debug.get("debug",False):
+            anhen_price = self.anhen_lock
+            wangzheng_price = self.wangzheng_lock
+        elif debug.get("fast",False):
+            anhen_price = int(self.anhen_lock - (self.expense_anhen/self.quantity) *  self.match_count)
+            wangzheng_price = int(self.wangzheng_lock - (self.expense_wangzheng/self.quantity) *  self.match_count)
+
+        
+        self.terminal.logs(f"[任务]当前购买数量: {self.quantity}")
+        self.terminal.logs(f"[任务]当前匹配次数: {self.match_count}")
+
+        if anhen_price != -1:
+            self.reader.set_anhen(anhen_price)
+            self.terminal.logs(f"[任务]设置暗痕值为: {anhen_price}")
+            self.anhen_lock = -1
+
+        if wangzheng_price != -1:
+            self.reader.set_wangzheng(wangzheng_price)
+            self.terminal.logs(f"[任务]设置王证值为: {wangzheng_price}")
+            self.wangzheng_lock = -1
 
 
     def _task_key(self, times: int = 1, key: str = "f", interval: float = 0):
@@ -132,15 +170,12 @@ class Task:
                 print("词条"+ str(i+1)+":"+debuff)
             self.terminal.logs("匹配得分:"+str(score))
             print("匹配得分:"+str(score))
-
-            # self.terminal.logs("-"*15)
-            # print("-"*15)
             
             if is_matched:
+                self.match_count += 1
                 self.terminal.logs("匹配成功")
                 print("匹配成功")
             self._task_filter_result(is_matched,data)
-  
     
     def _task_filter_result(self,result:bool=False,data : dict={}):
         actions = {}

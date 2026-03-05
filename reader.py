@@ -55,7 +55,7 @@ class Reader:
         except Exception:
             return None
     
-    def _read_memory(self, offset: int, use_pointer: bool = True) -> Tuple[Optional[int], int]:
+    def _read_memory(self, offset: int, use_pointer: bool = True, read_int: bool = False) -> Tuple[Optional[int], int]:
         if not self.pm:
             return (None, -1)
         
@@ -72,16 +72,19 @@ class Reader:
             else:
                 target_ptr = exe_base + offset
             
-            value = self.pm.read_longlong(target_ptr)
+            if read_int:
+                value = self.pm.read_int(target_ptr)
+            else:
+                value = self.pm.read_longlong(target_ptr)
             return (target_ptr, value)
         except Exception:
             return (None, -1)
     
-    def _read_pointer(self, offset: int) -> Tuple[Optional[int], int]:
-        return self._read_memory(offset, use_pointer=True)
+    def _read_pointer(self, offset: int, read_int: bool = False) -> Tuple[Optional[int], int]:
+        return self._read_memory(offset, use_pointer=True, read_int=read_int)
     
-    def _read_direct(self, offset: int) -> Tuple[Optional[int], int]:
-        return self._read_memory(offset, use_pointer=False)
+    def _read_direct(self, offset: int, read_int: bool = False) -> Tuple[Optional[int], int]:
+        return self._read_memory(offset, use_pointer=False, read_int=read_int)
     
     def get_anhen(self) -> int:
         ptr, value = self._read_pointer(self.ANHEN_OFFSETS)
@@ -89,12 +92,12 @@ class Reader:
         return value
     
     def get_wangzheng(self) -> int:
-        ptr, value = self._read_pointer(self.WANGZHENG_OFFSETS)
+        ptr, value = self._read_pointer(self.WANGZHENG_OFFSETS, read_int=True)
         self._cached_wangzheng_ptr = ptr
         return value
     
     def get_quantity(self) -> int:
-        ptr, value = self._read_direct(self.QUANTITY_OFFSET)
+        ptr, value = self._read_direct(self.QUANTITY_OFFSET, read_int=True)
         self._cached_quantity_ptr = ptr
         return value
     
@@ -128,7 +131,10 @@ class Reader:
         if cached_ptr:
             try:
                 self.pm.read_bytes(cached_ptr, 1)
-                self.pm.write_longlong(cached_ptr, value)
+                if 'wangzheng' in get_method.__name__ or 'quantity' in get_method.__name__:
+                    self.pm.write_int(cached_ptr, value)
+                else:
+                    self.pm.write_longlong(cached_ptr, value)
                 return True
             except Exception:
                 setattr(self, cache_attr, None)
