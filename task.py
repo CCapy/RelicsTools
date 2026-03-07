@@ -53,11 +53,14 @@ class Task:
 
         step = 0
         self._switch_window_to_foreground(hwnd)
-        for task in self.tasks:
-            step += 1
-            self.terminal.logs(
+
+        self.times = self.task.get("times", 1)
+        for _ in range(self.times):
+            for task in self.tasks:
+                step += 1
+                self.terminal.logs(
                 f"{step}/{self.task_count} - {task.get('tips', '无提示')}")
-            self._execute_task(task)
+                self._execute_task(task)
         self.terminal.logs(f"[任务]执行完成，共执行 {step} 个任务")
 
     def _execute_task(self, task):
@@ -71,6 +74,7 @@ class Task:
         if task.get("type") == "key":
             self._task_key(times, task.get('key', '').lower())
         elif task.get("type") == "filter":
+            self.match_count = 0
             data = task.get('data', {})
             self._task_filter(times, delay, data)
             self.config.save_total_data(self.total.get_all())
