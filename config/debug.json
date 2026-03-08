@@ -1,4 +1,5 @@
 {
-  "debug": false,
-  "fast": true
+  "debug": true,
+  "fast": 100,
+  "total": true
 }

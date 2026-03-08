@@ -5,7 +5,7 @@ from typing import Callable, Optional
 
 import frida
 
-import terminal
+import fast
 
 
 class Hook:

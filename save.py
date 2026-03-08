@@ -1,16 +1,15 @@
 import json
 import os
-from config import Config
-from log import Log
-from pathlib import Path
 import shutil
 from pathlib import Path
+
+from config import Config
+from log import Log
 from terminal import Terminal
 
 
 class Save:
     def __init__(self, config, terminal: Terminal):
-        self.path = "./config/save.json"
         self.config = config
         self.terminal = terminal
         self.data = self.config.get_save_data()
