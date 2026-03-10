@@ -1,5 +1,6 @@
-import tkinter as tk
 import json
+import tkinter as tk
+
 import log
 
 
@@ -45,6 +46,8 @@ class Terminal:
         self.text.config(state=tk.DISABLED)
         if log_type is not None:
             self.log.prints(message, log_type)
+        else:
+            self.log.prints(message,"success")
 
     def run(self):
         self.root.mainloop()

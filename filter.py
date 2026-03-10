@@ -67,16 +67,17 @@ class Filter:
         for tag in item.debuff:
             self.total.add(tag)
         
-        score = 0
+        max_score = 0
+        has_match = False
         for rule in self._rules:
             score = self._calculate_score(item, rule)
             if score == -1:
-                continue
+                return False, -1
+            if score > max_score:
+                max_score = score
             if rule.score == 0:
-                if score > 0: 
-                    return True,score
-                else:
-                    continue            
-            if score >= rule.score:
-                return True,score
-        return False, score
+                if score > 0:
+                    has_match = True
+            elif score >= rule.score:
+                has_match = True
+        return has_match, max_score

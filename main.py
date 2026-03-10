@@ -39,6 +39,7 @@ class App:
        # 注册快捷键
         keyboard.add_hotkey('num 9', self.close)
         keyboard.add_hotkey('num 1', self.start)
+        keyboard.add_hotkey('num 0', self.test)
 
         self.terminal.logs("-"*5 + "快捷键" + "-"*5)
         self.terminal.logs("[Num 1]  开始执行任务")
@@ -51,6 +52,10 @@ class App:
 
     def start(self):
         self.fast.start()
+    
+    def test(self):
+        print(type(self.hook.item["r"]))
+        print(self.hook.item["r"])
 
     def close(self):
         if self.terminal:
